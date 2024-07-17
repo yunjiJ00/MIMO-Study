@@ -1,14 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-'''
-송신 신호 생성: 복소 가우시안 신호를 생성
-채널 행렬 생성: 송신 안테나와 수신 안테나 간의 채널 행렬 𝐻를 생성합니다. 이 행렬의 요소들은 독립적으로 분포된 복소 가우시안 랜덤 변수
-잡음 생성: 잡음 신호를 생성
-수신 신호 생성: 송신 신호와 채널 행렬, 잡음을 사용하여 수신 신호를 생성
-시각화: 송신 신호와 수신 신호의 실수 및 허수 부분을 시각화
 
-이 코드를 실행하면, 송신 신호와 수신 신호의 실수 및 허수 부분을 그래프로 확인할 수 있습니다. 이를 통해 MIMO 채널의 동작을 시각적으로 이해할 수 있습니다.
-'''
 class MIMOSystem:
     def __init__(self, num_transmit_antennas=2, num_receive_antennas=3, num_symbols=1000, noise_power=0.1):
         self.num_transmit_antennas = num_transmit_antennas
@@ -84,6 +76,33 @@ class MIMOSystem:
         plt.xticks(antennas)
         plt.show()
 
+    def plot_combined_signal_comparison(self):
+        # 모든 수신 신호를 합해서 원래 신호를 추정
+        combined_signal = np.sum(self.received_signals, axis=0) / self.num_receive_antennas
+        
+        # 원래 신호와 추정된 신호의 비교 플롯
+        plt.figure(figsize=(18, 6))
+
+        # 실수부 플롯
+        plt.subplot(1, 2, 1)
+        plt.plot(np.real(self.transmitted_signal), label='Transmitted Signal (Real)', alpha=0.6)
+        plt.plot(np.real(combined_signal), label='Combined Received Signal (Real)', linestyle='--')
+        plt.title('Transmitted Signal vs. Combined Received Signal (Real Part)')
+        plt.xlabel('Symbol Index')
+        plt.ylabel('Amplitude')
+        plt.legend()
+
+        # 허수부 플롯
+        plt.subplot(1, 2, 2)
+        plt.plot(np.imag(self.transmitted_signal), label='Transmitted Signal (Imag)', alpha=0.6)
+        plt.plot(np.imag(combined_signal), label='Combined Received Signal (Imag)', linestyle='--')
+        plt.title('Transmitted Signal vs. Combined Received Signal (Imaginary Part)')
+        plt.xlabel('Symbol Index')
+        plt.ylabel('Amplitude')
+        plt.legend()
+
+        plt.show()
+
 # 예제 실행
 if __name__ == '__main__':
     num_transmit_antennas=2
@@ -99,3 +118,6 @@ if __name__ == '__main__':
     
     # 각 수신 안테나에서의 MSE 비교
     mimo_sim.plot_error_comparison()
+    
+    # 모든 수신 신호를 합성한 신호와 원래 신호 비교
+    mimo_sim.plot_combined_signal_comparison()

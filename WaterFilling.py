@@ -8,9 +8,11 @@ class PowerAllocationComparison:
     
     def water_filling(self):
         k = len(self.channel_gains)
-        N_sorted = np.sort(self.channel_gains)
+        sorted_indices = np.argsort(self.channel_gains)
+        N_sorted = self.channel_gains[sorted_indices]
         P = np.zeros(k)
         i = k
+        
         while True:
             nu = (self.total_power + np.sum(N_sorted[:i])) / i
             for j in range(i):
@@ -22,10 +24,17 @@ class PowerAllocationComparison:
                     P[j] = nu - N_sorted[j]
             if j == i - 1:
                 break
+        
+        # P 배열을 원래 순서로 복구
+        P_original_order = np.zeros(k)
+        P_original_order[sorted_indices] = P
+        
         C = np.zeros(k)
         for j in range(k):
-            C[j] = np.log2(1 + P[j] / self.channel_gains[j])
-        return P, C, np.sum(P), np.sum(C)
+            C[j] = np.log2(1 + P_original_order[j] / self.channel_gains[j])
+        
+        return P_original_order, C, np.sum(P_original_order), np.sum(C)
+
     
     def equal_power_allocation(self):
         n = len(self.channel_gains)
@@ -82,8 +91,8 @@ class PowerAllocationComparison:
         plt.show()
 
 def main():
-    channel_gains = [0.2, 0.5, 1.0, 1.5, 1.8]
-    total_power = 10
+    channel_gains = [2.5, 1.0, 1.5, 1.8, 0.5]
+    total_power = 2
 
     comparison = PowerAllocationComparison(channel_gains, total_power)
     comparison.plot_comparison()
