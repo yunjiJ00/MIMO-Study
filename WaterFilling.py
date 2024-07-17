@@ -8,9 +8,8 @@ class PowerAllocationComparison:
     
     def water_filling(self):
         k = len(self.channel_gains)
-        N_sorted = np.sort(self.channel_gains)  # Sort channel gains in ascending order
-        P = np.zeros(k)  # Initialize power allocation array
-        
+        N_sorted = np.sort(self.channel_gains)
+        P = np.zeros(k)
         i = k
         while True:
             nu = (self.total_power + np.sum(N_sorted[:i])) / i
@@ -23,21 +22,17 @@ class PowerAllocationComparison:
                     P[j] = nu - N_sorted[j]
             if j == i - 1:
                 break
-        
         C = np.zeros(k)
         for j in range(k):
             C[j] = np.log2(1 + P[j] / self.channel_gains[j])
-        
         return P, C, np.sum(P), np.sum(C)
     
     def equal_power_allocation(self):
         n = len(self.channel_gains)
         P = np.ones(n) * (self.total_power / n)
-        
         C = np.zeros(n)
         for j in range(n):
             C[j] = np.log2(1 + P[j] / self.channel_gains[j])
-        
         return P, C, np.sum(P), np.sum(C)
     
     def get_water_filling_allocation(self):
@@ -53,7 +48,6 @@ class PowerAllocationComparison:
         ep_allocation, ep_capacities, ep_total_power, ep_total_capacity = self.get_equal_power_allocation()
 
         x = np.arange(len(self.channel_gains))
-
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
         # Water-Filling 그래프
@@ -80,7 +74,6 @@ class PowerAllocationComparison:
         ax2.set_title('Equal Power Allocation')
         ax2.legend()
 
-        # 두 서브플롯의 y축 스케일을 동일하게 맞추기
         max_power = max(np.max(self.channel_gains + wf_allocation), np.max(self.channel_gains + ep_allocation))
         ax1.set_ylim(0, max_power + 1)
         ax2.set_ylim(0, max_power + 1)
@@ -89,8 +82,8 @@ class PowerAllocationComparison:
         plt.show()
 
 def main():
-    channel_gains = [0.2, 0.5, 1.0, 1.5, 1.8]  # 채널 이득
-    total_power = 10  # 총 전력 제약
+    channel_gains = [0.2, 0.5, 1.0, 1.5, 1.8]
+    total_power = 10
 
     comparison = PowerAllocationComparison(channel_gains, total_power)
     comparison.plot_comparison()
