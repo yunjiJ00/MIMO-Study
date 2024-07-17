@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class PowerAllocationComparison:
+class WaaterFillingComparison:
     def __init__(self, channel_gains, total_power):
         self.channel_gains = np.array(channel_gains)
         self.total_power = total_power
@@ -24,8 +24,7 @@ class PowerAllocationComparison:
                     P[j] = nu - N_sorted[j]
             if j == i - 1:
                 break
-        
-        # P 배열을 원래 순서로 복구
+
         P_original_order = np.zeros(k)
         P_original_order[sorted_indices] = P
         
@@ -94,7 +93,7 @@ def main():
     channel_gains = [2.5, 1.0, 1.5, 1.8, 0.5]
     total_power = 2
 
-    comparison = PowerAllocationComparison(channel_gains, total_power)
+    comparison = WaaterFillingComparison(channel_gains, total_power)
     comparison.plot_comparison()
 
 if __name__ == "__main__":
