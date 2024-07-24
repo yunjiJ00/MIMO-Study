@@ -90,8 +90,8 @@ class WaaterFillingComparison:
         plt.show()
 
 def main():
-    channel_gains = [2.5, 1.0, 1.5, 1.8, 0.5]
-    total_power = 2
+    channel_gains = [2.5, 1.0, 3.0, 1.8, 0.5]
+    total_power = 4
 
     comparison = WaaterFillingComparison(channel_gains, total_power)
     comparison.plot_comparison()
