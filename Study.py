@@ -1,73 +1,75 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def diversity_order(M_T, M_R, R_c, M_s):
-    return (M_T - np.floor(R_c * M_s) + 1) * (M_R - np.floor(R_c * M_s) + 1)
+def generate_bpsk_symbols(num_bits):
+    return 2 * np.random.randint(0, 2, num_bits) - 1
 
-def diversity_gain(M_T, M_R, R_c, M_s):
-    return diversity_order(M_T, M_R, R_c, M_s) / (M_T * M_R)
+def apply_mimo_channel(symbols, num_tx, num_rx, snr_db):
+    snr_linear = 10**(snr_db / 10)
+    noise_variance = 1 / snr_linear
+    h = np.random.normal(0, 1, (num_rx, num_tx)) + 1j * np.random.normal(0, 1, (num_rx, num_tx))
+    noise = np.sqrt(noise_variance/2) * (np.random.normal(0, 1, (num_rx, symbols.shape[1])) + 1j * np.random.normal(0, 1, (num_rx, symbols.shape[1])))
+    received_signal = h @ symbols + noise
+    return received_signal, h
 
-# Figure and Subplots 설정
-fig, axs = plt.subplots(2, 2, figsize=(14, 12))
-axs = axs.flatten()
+def ml_detection(received_signal, h):
+    num_rx, num_tx = h.shape
+    num_symbols = received_signal.shape[1]
+    possible_symbols = np.array(np.meshgrid(*[[-1, 1]] * num_tx)).T.reshape(-1, num_tx)
+    detected_symbols = np.zeros((num_tx, num_symbols), dtype=int)
+    
+    for i in range(num_symbols):
+        min_distance = np.inf
+        best_symbol = None
+        for symbol in possible_symbols:
+            distance = np.linalg.norm(received_signal[:, i] - h @ symbol)
+            if distance < min_distance:
+                min_distance = distance
+                best_symbol = symbol
+        detected_symbols[:, i] = best_symbol
+    print('ML detection completed for a channel realization.')
+    return detected_symbols
 
-# 1. M_s를 2로 고정하고 안테나 개수를 range(1, 16)까지, R_c값 [0.5, 1.0, 1.5] 별로 비교
-M_s_fixed = 2
-antenna_range = range(1, 8)
-R_c_values = [0.5, 1.0, 1.5]
+def calculate_ber(num_bits, num_tx, num_rx, snr_db, num_channels, num_symbols):
+    total_bit_errors = 0
+    total_bits_sent = num_bits * num_channels * num_symbols
 
-for R_c in R_c_values:
-    diversity_gains = [diversity_gain(M, M, R_c, M_s_fixed) for M in antenna_range]
-    axs[0].plot(antenna_range, diversity_gains, marker='o', label=f'R_c={R_c}')
+    for i in range(num_channels):
+        symbols = generate_bpsk_symbols(num_bits * num_symbols)
+        transmitted_symbols = symbols.reshape((num_tx, -1))
+        received_signal, h = apply_mimo_channel(transmitted_symbols, num_tx, num_rx, snr_db)
+        detected_bits = ml_detection(received_signal, h).reshape(-1)
+        bit_errors = np.sum(detected_bits != (symbols > 0))
+        total_bit_errors += bit_errors
+        
+        if (i + 1) % 10 == 0:  # 10개 채널 처리 후 진행 상황을 출력
+            print(f"Processed {i + 1}/{num_channels} channels.")
 
-axs[0].set_title(f'Diversity Gain vs. Number of Antennas (M_s={M_s_fixed})')
-axs[0].set_xlabel('Number of Antennas (M_T = M_R)')
-axs[0].set_ylabel('Diversity Gain')
-axs[0].legend()
-axs[0].grid(True)
+    ber = total_bit_errors / total_bits_sent
+    return ber
 
-# 2. M_s를 2로 고정하고 R_c를 range(-1, 1), 안테나 개수 [2, 4, 8] 별로 비교
-M_s_fixed = 2
-R_c_range = np.linspace(-1, 1, 15)
-antenna_values = [2, 4, 8]
+def simulate_ber(num_bits, num_tx, num_rx, snr_range, num_channels, num_symbols):
+    ber_results = []
+    total_snr_values = len(snr_range)
+    for idx, snr_db in enumerate(snr_range):
+        print(f"Processing SNR {snr_db} dB ({idx + 1}/{total_snr_values})")
+        ber = calculate_ber(num_bits, num_tx, num_rx, snr_db, num_channels, num_symbols)
+        ber_results.append(ber)
+        print(f"SNR {snr_db} dB completed with BER: {ber:.6f}")
+    return ber_results
 
-for M in antenna_values:
-    diversity_gains = [diversity_gain(M, M, R_c, M_s_fixed) for R_c in R_c_range]
-    axs[1].plot(R_c_range, diversity_gains, marker='o', label=f'Antennas={M}')
+# Simulation parameters
+num_bits = 100  # Number of bits per transmission
+snr_range = range(-11, 31, 2)  # SNR range from -11 to 31 dB
+num_channels = 100  # Number of different channel realizations
+num_symbols = 1000  # Number of symbols per channel realization
 
-axs[1].set_title(f'Diversity Gain vs. Code Rate (R_c) (M_s={M_s_fixed})')
-axs[1].set_xlabel('Code Rate (R_c)')
-axs[1].set_ylabel('Diversity Gain')
-axs[1].legend()
-axs[1].grid(True)
-
-# 3. R_c를 1로 고정하고, 안테나 개수를 range(1, 16)까지, M_s값 [1, 2, 4] 별로 비교
-R_c_fixed = 1
-M_s_values = [1, 2, 4]
-
-for M_s in M_s_values:
-    diversity_gains = [diversity_order(M, M, R_c_fixed, M_s) for M in antenna_range]
-    axs[2].plot(antenna_range, diversity_gains, marker='o', label=f'M_s={M_s}')
-
-axs[2].set_title(f'Diversity Gain vs. Number of Antennas (R_c={R_c_fixed})')
-axs[2].set_xlabel('Number of Antennas (M_T = M_R)')
-axs[2].set_ylabel('Diversity Gain')
-axs[2].legend()
-axs[2].grid(True)
-
-# 4. R_c를 1로 고정하고, M_s를 range(1, 4)까지, 안테나 개수 [2, 4, 8] 별로 비교
-R_c_fixed = 1
-M_s_range = range(1, 4)
-
-for M in antenna_values:
-    diversity_gains = [diversity_gain(M, M, R_c_fixed, M_s) for M_s in M_s_range]
-    axs[3].plot(M_s_range, diversity_gains, marker='o', label=f'Antennas={M}')
-
-axs[3].set_title(f'Diversity Gain vs. Spatial Multiplexing Level (M_s) (R_c={R_c_fixed})')
-axs[3].set_xlabel('Spatial Multiplexing Level (M_s)')
-axs[3].set_ylabel('Diversity Gain')
-axs[3].legend()
-axs[3].grid(True)
-
-plt.tight_layout()
+# Plotting the results
+plt.figure(figsize=(10, 6))
+plt.semilogy(snr_range, simulate_ber(num_bits, 4, 4, snr_range, num_channels, num_symbols), 'o-', label="4x4 MIMO")
+plt.xlabel("SNR (dB)")
+plt.ylabel("BER")
+plt.title("BER vs SNR for MIMO BPSK System with ML Detection")
+plt.grid(True)
+plt.legend()
 plt.show()
