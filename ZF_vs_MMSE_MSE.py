@@ -1,50 +1,42 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 파라미터 설정
-num_symbols = 4   # 송신 심볼의 수
-num_antennas = 4  # 안테나의 수
+# Zero Forcing MSE 계산 함수
+def zero_forcing_mse(SNR_dB, H):
+    sigma_squared = 1 / (10**(SNR_dB / 10))
+    H_hermitian_H = H.T.conj() @ H
+    mse = sigma_squared * np.trace(np.linalg.inv(H_hermitian_H))
+    return mse
 
-# 잡음의 분산 설정
-sigma_n = 1  # 잡음의 분산
+# MMSE MSE 계산 함수
+def mmse_mse(SNR_dB, H):
+    sigma_squared = 1 / (10**(SNR_dB / 10))
+    H_hermitian_H = H.T.conj() @ H
+    inverse_term = np.linalg.inv(H_hermitian_H + sigma_squared * np.eye(H.shape[1]))
+    mse = sigma_squared * np.trace(inverse_term)
+    return mse
 
-# SNR 범위 설정 (dB로 설정 후 선형 스케일로 변환)
-SNR_dB = np.arange(-5, 35, 2)  # SNR 범위 (-5dB, -3dB, ..., 33dB)
-SNR_linear = 10 ** (SNR_dB / 10)
-alpha = 1 / SNR_linear  # MMSE에서 사용할 alpha
+# 랜덤 채널 행렬 생성 함수
+def generate_random_channel(m, n):
+    return np.random.randn(m, n) + 1j * np.random.randn(m, n)
 
-# ZF와 MMSE의 MSE를 저장할 배열
-mse_zf = []
-mse_mmse = []
-# 채널 행렬 생성
-H = np.random.randn(num_antennas, num_symbols) + 1j * np.random.randn(num_antennas, num_symbols)
-H = H / np.sqrt(2)  # 채널 행렬 정규화
+# SNR 범위 설정 (dB 단위)
+SNR_dB_range = np.linspace(-5, 31, 25)
 
-# 송신 심볼 생성 (BPSK)
-x = np.random.choice([-1, 1], num_symbols)  # 송신 심볼
+# 채널 행렬 생성 (예: 2x2 크기)
+H = generate_random_channel(2, 2)
 
-for snr, alpha_val in zip(SNR_linear, alpha):
-    # 수신 신호 생성
-    noise = (np.random.randn(num_antennas) + 1j * np.random.randn(num_antennas)) * np.sqrt(sigma_n / 2)
-    y = np.dot(H, x) + noise / np.sqrt(snr)  # SNR에 따라 노이즈 조절
+# ZF와 MMSE의 MSE 계산
+zf_mse_values = [zero_forcing_mse(snr, H) for snr in SNR_dB_range]
+mmse_mse_values = [mmse_mse(snr, H) for snr in SNR_dB_range]
 
-    # Zero Forcing (ZF) 공분산 행렬
-    H_H_H_H_inv = np.linalg.inv(H.conj().T @ H)
-    covariance_zf = sigma_n**2 * H_H_H_H_inv
-    mse_zf.append(np.mean(np.diag(covariance_zf)))
-
-    # Minimum Mean Square Error (MMSE) 공분산 행렬
-    covariance_mmse = sigma_n**2 * np.linalg.inv(H.conj().T @ H + alpha_val * np.eye(num_symbols))
-    mse_mmse.append(np.mean(np.diag(covariance_mmse)))
-
-# 플롯 생성
+# 플롯 그리기
 plt.figure(figsize=(10, 6))
-plt.plot(SNR_dB, mse_zf, 'o-', label='ZF MSE')
-plt.plot(SNR_dB, mse_mmse, 's-', label='MMSE MSE')
+plt.plot(SNR_dB_range, zf_mse_values, 'o-', label='Zero Forcing MSE')
+plt.plot(SNR_dB_range, mmse_mse_values, 's-', label='MMSE MSE')
 plt.xlabel('SNR (dB)')
 plt.ylabel('Mean Square Error (MSE)')
-plt.title('ZF vs MMSE MSE at Different SNR')
-plt.grid(True)
+plt.title('ZF and MMSE MSE')
 plt.legend()
-plt.tight_layout()
+plt.grid(True)
 plt.show()

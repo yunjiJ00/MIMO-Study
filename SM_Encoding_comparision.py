@@ -1,42 +1,59 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Zero Forcing MSE 계산 함수
-def zero_forcing_mse(SNR_dB, H):
-    sigma_squared = 1 / (10**(SNR_dB / 10))
-    H_hermitian_H = H.T.conj() @ H
-    mse = sigma_squared * np.trace(np.linalg.inv(H_hermitian_H))
-    return mse
+def channel_capacity(snr_db):
+    """
+    Calculate channel capacity given SNR in dB.
+    
+    Parameters:
+    snr_db (float): Signal-to-noise ratio in dB.
+    
+    Returns:
+    float: Channel capacity in bits per second per Hz.
+    """
+    snr_linear = 10 ** (snr_db / 10)
+    return np.log2(1 + snr_linear)
 
-# MMSE MSE 계산 함수
-def mmse_mse(SNR_dB, H):
-    sigma_squared = 1 / (10**(SNR_dB / 10))
-    H_hermitian_H = H.T.conj() @ H
-    inverse_term = np.linalg.inv(H_hermitian_H + sigma_squared * np.eye(H.shape[1]))
-    mse = sigma_squared * np.trace(inverse_term)
-    return mse
+def simulate_capacities(snr_db_range, tx_antennas):
+    """
+    Simulate channel capacities for horizontal and vertical encoding.
+    
+    Parameters:
+    snr_db_range (np.ndarray): Array of SNR values in dB.
+    tx_antennas (int): Number of transmit antennas.
+    
+    Returns:
+    tuple: (horizontal_capacities, vertical_capacities)
+    """
+    horizontal_capacities = []
+    vertical_capacities = []
 
-# 랜덤 채널 행렬 생성 함수
-def generate_random_channel(m, n):
-    return np.random.randn(m, n) + 1j * np.random.randn(m, n)
+    for snr_db in snr_db_range:
+        # Horizontal Encoding: Capacity per antenna (independent)
+        horizontal_capacity = channel_capacity(snr_db)
 
-# SNR 범위 설정 (dB 단위)
-SNR_dB_range = np.linspace(-5, 31, 25)
+        # Vertical Encoding: Total capacity considering multiple antennas
+        vertical_capacity = tx_antennas * channel_capacity(snr_db)
 
-# 채널 행렬 생성 (예: 2x2 크기)
-H = generate_random_channel(2, 2)
+        horizontal_capacities.append(horizontal_capacity)
+        vertical_capacities.append(vertical_capacity)
 
-# ZF와 MMSE의 MSE 계산
-zf_mse_values = [zero_forcing_mse(snr, H) for snr in SNR_dB_range]
-mmse_mse_values = [mmse_mse(snr, H) for snr in SNR_dB_range]
+    return np.array(horizontal_capacities), np.array(vertical_capacities)
 
-# 플롯 그리기
+# Parameters
+tx_antennas = 4  # Number of transmit antennas
+snr_db_range = np.linspace(-5, 31, 100)  # SNR range from 0 to 20 dB
+
+# Simulate capacities
+horizontal_capacities, vertical_capacities = simulate_capacities(snr_db_range, tx_antennas)
+
+# Plot comparison
 plt.figure(figsize=(10, 6))
-plt.plot(SNR_dB_range, zf_mse_values, 'o-', label='Zero Forcing MSE')
-plt.plot(SNR_dB_range, mmse_mse_values, 's-', label='MMSE MSE')
+plt.plot(snr_db_range, horizontal_capacities, label='Horizontal Encoding', color='blue')
+plt.plot(snr_db_range, vertical_capacities, label='Vertical Encoding', color='green')
 plt.xlabel('SNR (dB)')
-plt.ylabel('Mean Square Error (MSE)')
-plt.title('ZF and MMSE MSE')
+plt.ylabel('Channel Capacity (bits/Hz)')
+plt.title('Channel Capacity Comparison: \nHorizontal vs Vertical Encoding')
 plt.legend()
 plt.grid(True)
 plt.show()
