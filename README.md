@@ -1,6 +1,10 @@
 # U-Surf
 MIMO 공부 코드
 
+공부 정리
+https://yunji00.notion.site/U-Surf-af47e0806adc4ad6b87566254455abf0?pvs=4
+
+
 **2단원**
 ![capacity_vs_snr](https://github.com/user-attachments/assets/e2dab5f0-64d1-4ac7-89f1-deb6fbe52f0a)
 ![capacity_vs_antennas](https://github.com/user-attachments/assets/2caa0414-4c9a-4c4a-adb1-abf3dab27c2d)
