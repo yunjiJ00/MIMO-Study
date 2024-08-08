@@ -59,10 +59,10 @@ def simulate_ber(num_bits, num_tx, num_rx, snr_range, num_channels, num_symbols)
     return ber_results
 
 # Simulation parameters
-num_bits = 100  # Number of bits per transmission
+num_bits = 10  # Number of bits per transmission
 snr_range = range(-11, 31, 2)  # SNR range from -11 to 31 dB
-num_channels = 100  # Number of different channel realizations
-num_symbols = 1000  # Number of symbols per channel realization
+num_channels = 10  # Number of different channel realizations
+num_symbols = 10 # Number of symbols per channel realization
 
 # Plotting the results
 plt.figure(figsize=(10, 6))

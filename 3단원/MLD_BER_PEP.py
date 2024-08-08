@@ -16,7 +16,7 @@ def ber_from_pep(pep_vals, num_symbols):
 # 시뮬레이션 파라미터
 lambda_val = 1  # λ는 일반적으로 1로 가정할 수 있습니다.
 M_R_values = [1, 4, 16, 64]  # 1x1, 2x2, 4x4 MIMO 시스템에 해당하는 수신 안테나 수
-num_symbols = 1000000000  # 심볼의 수를 1000으로 설정
+num_symbols = 1000  # 심볼의 수를 1000으로 설정
 
 plt.figure(figsize=(15, 5))
 plt.subplot(1, 2, 1)
