@@ -4,8 +4,8 @@ from scipy.integrate import trapezoid
 
 class VectorPerturbation:
     def __init__(self):
-        self.K_values = np.arange(1, 15)
-        self.rho_dB = 10
+        self.rho_dB = np.arange(-10, 30)
+        self.K = 10
         self.rho = 10 ** (self.rho_dB / 10)
         self.alpha_values = np.logspace(-2, 1, 100)
         self.num_trials = 5000
@@ -51,7 +51,7 @@ class VectorPerturbation:
 
     def plot_regularized_inversion(self):
         K_values = np.array([10])
-        rho_dB_values = np.arange(-11, 21)
+        rho_dB_values = np.arange(-11, 30)
         rho_values = 10 ** (rho_dB_values / 10)
 
         K_vals, sum_capacity = self.sum_capacity(K_values, rho_values)
