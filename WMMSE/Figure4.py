@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 # Parameters
 P = 4  # Number of transmit antennas
-K_values = [1, 2, 6]  # Different numbers of users
+K_values = [6, 2, 1]  # Different numbers of users
 Q = 2  # Dual receive antennas per user
 num_channels = 1000  # Number of random channel realizations
 snr_db = np.linspace(-10, 30, 10)  # SNR range in dB

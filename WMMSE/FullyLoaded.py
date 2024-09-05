@@ -27,6 +27,7 @@ for i, snr in enumerate(snr_linear):
     sum_rate_transmit = np.zeros(num_channels)
     
     for j in range(num_channels):
+        
         H = (np.random.randn(K * Q, P) + 1j * np.random.randn(K * Q, P)) / np.sqrt(2)  # Complex Gaussian channel
         
         # DPC capacity bound
@@ -37,24 +38,23 @@ for i, snr in enumerate(snr_linear):
         max_sum_rate = 0
         for _ in range(10):
             # Transmit matched filter initialization
-            # B_init = H.conj().T  # Transmit matched filter initialization
-            # B_wmmse1 = B_init / np.linalg.norm(B_init, axis=0)  # Normalize the filter
             B_init = H.conj().T
             b = np.sqrt(E_tx / np.trace(B_init @ B_init.conj().T))
-            B_wmmse1 = b * B_init
-            for _ in range(10):
-                # Compute receive filters
-                A_wmmse1 = np.linalg.inv(H @ B_wmmse1 @ B_wmmse1.conj().T @ H.conj().T + sigma2 * np.eye(K * Q)) @ H @ B_wmmse1
-                # Compute MSE weights
-                W_wmmse1 = np.diag(1 / np.diag(np.eye(K * Q) - A_wmmse1 @ H @ B_wmmse1))
-                # Update transmit filters
-                B_wmmse1 = np.linalg.inv(H.conj().T @ W_wmmse1 @ H + (sigma2 / snr) * np.eye(P)) @ (H.conj().T @ W_wmmse1)
-            
+            B_wmmse1 = b * B_init # Transmit matched filter initialization
+            # Compute receive filters
+            A_wmmse1 = np.linalg.inv(H @ B_wmmse1 @ B_wmmse1.conj().T @ H.conj().T + sigma2 * np.eye(K * Q)) @ H @ B_wmmse1
+            # Compute MSE weights
+            W_wmmse1 = np.diag(1 / np.diag(np.eye(K * Q) - A_wmmse1 @ H @ B_wmmse1))
+            # Update transmit filters
+            B_wmmse1 = np.linalg.inv(H.conj().T @ W_wmmse1 @ H + (sigma2 / snr) * np.eye(P)) @ (H.conj().T @ W_wmmse1)
+
             # Calculate sum rate for this initialization
+            count = 0
             C_wmmse1 = np.sum([np.log2(1 + snr * abs(H[k, :] @ B_wmmse1[:, k]) ** 2 / sigma2) for k in range(K * Q)])
             if C_wmmse1 > max_sum_rate:
+                count += 1
                 max_sum_rate = C_wmmse1
-
+            print(count)
         sum_rate_wsrbf_wmmse1[j] = np.real(max_sum_rate)  # Real part only
         
         # WSRBF-WMMSE2: Transmit matched filter initialization, 10 iterations
@@ -80,8 +80,8 @@ for i, snr in enumerate(snr_linear):
         # Transmit matched filter
         B_init = H.conj().T
         b = np.sqrt(E_tx / np.trace(B_init @ B_init.conj().T))
-        B_wmmse2 = b * B_init # Transmit matched filter initialization
-        C_transmit = np.sum([np.log2(1 + snr * abs(H[k, :] @ B_wmmse2[:, k]) ** 2 / sigma2) for k in range(K * Q)])
+        B_wmmse = b * B_init # Transmit matched filter initialization
+        C_transmit = np.sum([np.log2(1 + snr * abs(H[k, :] @ B_wmmse[:, k]) ** 2 / sigma2) for k in range(K * Q)])
         sum_rate_transmit[j] = np.real(C_transmit)  # Real part only
     
     # Average the sum rates over all channel realizations
@@ -97,7 +97,7 @@ plt.plot(snr_db, avg_sum_rate_dpc, label="DPC Capacity Bound", linestyle='-', ma
 plt.plot(snr_db, avg_sum_rate_wsrbf_wmmse1, label="WSRBF-WMMSE1", linestyle='--', marker='o')
 plt.plot(snr_db, avg_sum_rate_wsrbf_wmmse2, label="WSRBF-WMMSE2", linestyle='-.', marker='+')
 plt.plot(snr_db, avg_sum_rate_zfbf, label="ZFBF Optimal User Sel. + Waterfill", linestyle='--', marker='*')
-plt.plot(snr_db, avg_sum_rate_transmit, label="Transmit Matched Filter (TxMF)", linestyle='--', marker='v')
+# plt.plot(snr_db, avg_sum_rate_transmit, label="Transmit Matched Filter (TxMF)", linestyle='--', marker='v')
 
 plt.xlabel('SNR (dB)')
 plt.ylabel('Sum Rate (bps/Hz)')
